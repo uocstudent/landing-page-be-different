@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BE DIFFERENT 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos Globales y para Animaciones */
+        html {
+            scroll-behavior: smooth;
+            /* Considerar quitar scroll-snap-type si causa problemas con IntersectionObserver o animaciones finas */
+            /* scroll-snap-type: y proximity; */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            /* gray-900 Tailwind */
+            color: #f3f4f6;
+            /* gray-100 Tailwind approx */
+            overflow-x: hidden;
+            /* Prevenir scroll horizontal por animaciones */
+        }
+
+        section {
+            /* scroll-snap-align: start; */
+            /* Desactivado para mejor control con JS */
+            overflow: hidden;
+            /* Para contener animaciones */
+        }
+
+        :root {
+            --mouse-x: 0px;
+            --mouse-y: 0px;
+        }
+
+        /* Clases de animación genéricas */
+        .fade-in {
+            opacity: 0;
+            transition: opacity 1s ease-out;
+        }
+
+        .fade-in.is-visible {
+            opacity: 1;
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fade-in-up.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .fade-in-down {
+            opacity: 0;
+            transform: translateY(-50px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fade-in-down.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .fade-in-left {
+            opacity: 0;
+            transform: translateX(-100px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fade-in-left.is-visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .fade-in-right {
+            opacity: 0;
+            transform: translateX(100px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fade-in-right.is-visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .scale-in {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .scale-in.is-visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .spring-in {
+            transform: scale(0);
+            opacity: 0;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease-out;
+            /* Simulación de spring */
+        }
+
+        .spring-in.is-visible {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Hover effects (simulando whileHover) */
+        .hero-button-hover:hover {
+            transform: scale(1.05) translateY(-5px) !important;
+            /* Important para sobreescribir animación inicial si es necesario */
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .step-card-hover:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .tech-card-hover:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        .demo-image-hover:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+        }
+
+        .demo-image-hover .group-hover-overlay {
+            opacity: 1;
+        }
+
+        .demo-image-hover img {
+            transform: scale(1.1);
+        }
+
+        /* KeyDifferences Carousel */
+        .carousel-item {
+            position: absolute;
+            /* Para superponer slides */
+            width: 100%;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+
+        .carousel-item.active {
+            opacity: 1;
+            transform: translateX(0);
+            position: relative;
+            /* Para que ocupe espacio */
+        }
+
+        .carousel-item.exiting {
+            opacity: 0;
+            transform: translateX(-100px);
+        }
+
+        #keyDifferencesCarouselContainer {
+            min-height: 350px;
+            /* Ajusta según el contenido máximo del slide */
+        }
+
+        /* How It Works Arrows */
+        .how-it-works-arrow {
+            width: 0;
+            opacity: 0;
+            height: 0.5rem;
+            /* h-2 */
+            border-radius: 9999px;
+            /* rounded-full */
+            position: relative;
+            background-image: linear-gradient(to right, var(--tw-gradient-stops));
+            --tw-gradient-from: #3b82f6;
+            /* blue-500 */
+            --tw-gradient-to: #06b6d4;
+            /* cyan-500 */
+            --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+            transition: width 0.8s ease-out, opacity 0.8s ease-out;
+        }
+
+        .how-it-works-arrow.is-visible {
+            width: calc(100% / 3 - 2rem);
+            /* Ajustado para el gap */
+            opacity: 1;
+        }
+
+        .how-it-works-arrow svg {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%) translateX(100%);
+            height: 2rem;
+            /* h-8 */
+            width: 2rem;
+            /* w-8 */
+            color: #06b6d4;
+            /* cyan-500 */
+        }
+
+        #tooltip {
+            position: fixed;
+            /* Usar fixed para que no se vea afectado por el scroll */
+            background-color: #374151;
+            /* gray-700 */
+            color: white;
+            font-size: 0.875rem;
+            /* text-sm */
+            padding: 0.25rem 0.75rem;
+            /* px-3 py-1 */
+            border-radius: 0.375rem;
+            /* rounded-md */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            /* shadow-lg */
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.2s, transform 0.2s;
+            pointer-events: none;
+            z-index: 1000;
+            white-space: nowrap;
+        }
+
+        #tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app" class="font-inter antialiased bg-gray-900">
+
+        <section id="heroSection"
+            class="relative h-screen flex flex-col items-center justify-center text-center text-white overflow-hidden p-4 fade-in">
+            <div class="absolute inset-0 bg-gradient-to-br from-gray-900 to-black opacity-90 z-0"></div>
+            <div class="absolute inset-0 bg-black opacity-50 z-0"></div>
+            <!-- <div class="absolute inset-0 bg-[url('images/.jpg')] bg-cover bg-center opacity-10 z-0"></div> -->
+            <div class="relative z-10 space-y-6">
+                <div id="heroLogoTitle" class="flex items-center justify-center mb-4 fade-in-down"
+                    style="transition-delay: 0.5s;">
+                    <img src="images/mi-logo.png" alt="Logo BE DIFFERENT 3D" class="w-16 h-16 mr-4 drop-shadow-lg">
+                    <h1
+                        class="text-5xl md:text-7xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                        BE DIFFERENT <span class="text-4xl md:text-6xl">3D</span>
+                    </h1>
+                </div>
+
+                <p id="heroSubtitle" class="text-xl md:text-3xl text-gray-200 font-light max-w-3xl mx-auto fade-in-up"
+                    style="transition-delay: 0.8s;">
+                    Plataforma web de personalización inmersiva con IA
+                </p>
+
+                <p id="heroTagline" class="text-lg md:text-xl text-cyan-300 font-semibold italic fade-in"
+                    style="transition-delay: 1.2s;">
+                    Diseña tu estilo. En 3D. En segundos.
+                </p>
+
+                <a id="heroButton" href="#" target="_blank" rel="noopener noreferrer"
+                    class="hero-button-hover inline-block px-8 py-4 mt-8 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-lg rounded-full shadow-lg hover:shadow-xl transform transition-all duration-300 ease-in-out border-2 border-transparent hover:border-cyan-300 spring-in"
+                    style="transition-delay: 1.5s;">
+                    Accede al demo
+                </a>
+            </div>
+        </section>
+
+        <section id="whatIsSection" class="py-20 px-4 bg-gray-900 text-white">
+            <div class="max-w-6xl mx-auto">
+                <h2
+                    class="animated-item fade-in-down text-4xl md:text-5xl font-bold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-cyan-200">
+                    ¿Qué es BE DIFFERENT 3D?
+                </h2>
+                <div class="flex flex-col md:flex-row items-center gap-12">
+                    <div class="animated-item fade-in-left md:w-1/2 space-y-6 text-lg leading-relaxed"
+                        style="transition-delay: 0.3s;">
+                        <p>
+                            <span class="text-cyan-400 font-semibold">BE DIFFERENT 3D</span> es una innovadora
+                            plataforma web que te permite personalizar productos de moda como camisetas, gorras y
+                            zapatillas en un entorno 3D interactivo directamente desde tu navegador.
+                        </p>
+                        <p>
+                            Va más allá de la personalización tradicional al integrar <span
+                                class="text-blue-300 font-semibold">Inteligencia Artificial</span> para la generación de
+                            logotipos y texturas, ofreciéndote posibilidades de diseño ilimitadas y únicas.
+                        </p>
+                        <p class="flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Diseño intuitivo y en tiempo real.
+                        </p>
+                        <p class="flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-blue-400" fill="currentColor" viewBox="0 0 20 20"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg>
+                            Libertad creativa asistida por IA.
+                        </p>
+                    </div>
+                    <div class="animated-item fade-in-right md:w-1/2 flex justify-center items-center p-6 bg-gray-800 rounded-xl shadow-2xl border border-cyan-700"
+                        style="transition-delay: 0.5s;">
+                        <img src="images/mi-canvas-3d.jpg" alt="Visualización de personalización 3D en la plataforma"
+                            class="animated-item scale-in w-full h-auto rounded-lg shadow-xl"
+                            style="transition-delay: 0.7s;" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="howItWorksSection" class="py-20 px-4 bg-black text-white">
+            <div class="max-w-6xl mx-auto">
+                <h2
+                    class="animated-item fade-in-down text-4xl md:text-5xl font-bold text-center mb-16 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-200">
+                    Cómo funciona
+                </h2>
+                <div id="howItWorksSteps"
+                    class="relative flex flex-col md:flex-row justify-between items-start md:items-stretch gap-8 md:gap-0">
+                </div>
+                <div id="howItWorksArrows"
+                    class="hidden md:flex absolute top-1/2 left-0 right-0 -translate-y-1/2 justify-center items-center pointer-events-none"
+                    style="padding-left: 12.5%; padding-right: 12.5%; gap: calc(12.5% - 1rem);">
+                </div>
+            </div>
+        </section>
+
+        <section id="keyDifferencesSection" class="py-20 px-4 bg-gray-950 text-white">
+            <div class="max-w-6xl mx-auto">
+                <h2
+                    class="animated-item fade-in-down text-4xl md:text-5xl font-bold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                    Diferencias clave
+                </h2>
+                <div
+                    class="relative w-full max-w-4xl mx-auto overflow-hidden rounded-xl shadow-2xl border border-cyan-800 bg-gray-900 p-8">
+                    <div id="keyDifferencesCarouselContainer"
+                        class="relative flex items-center justify-center text-center py-8">
+                    </div>
+                    <button id="carouselPrev" aria-label="Previous slide"
+                        class="absolute left-4 top-1/2 -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition-colors duration-300 border border-cyan-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <button id="carouselNext" aria-label="Next slide"
+                        class="absolute right-4 top-1/2 -translate-y-1/2 bg-gray-800 text-white p-3 rounded-full shadow-lg hover:bg-gray-700 transition-colors duration-300 border border-cyan-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div id="carouselDots" class="flex justify-center mt-6 space-x-2">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="demoSection" class="py-20 px-4 bg-gray-900 text-white">
+            <div class="max-w-6xl mx-auto">
+                <h2
+                    class="animated-item fade-in-down text-4xl md:text-5xl font-bold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-200">
+                    Demo Visual
+                </h2>
+                <div id="demoGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 relative">
+                </div>
+            </div>
+        </section>
+        <div id="tooltip"></div>
+
+
+        <section id="techStackSection" class="py-20 px-4 bg-black text-white">
+            <div class="max-w-6xl mx-auto">
+                <h2
+                    class="animated-item fade-in-down text-4xl md:text-5xl font-bold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                    Tecnologías utilizadas
+                </h2>
+                <div id="techStackGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+                </div>
+            </div>
+        </section>
+
+        <section id="ctaSection" class="py-20 px-4 bg-gray-950 text-white">
+            <div
+                class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-center gap-12 text-center md:text-left">
+                <div class="animated-item fade-in-left md:w-1/2 flex flex-col items-center md:items-start">
+                    <img id="qrCodeImage" src="" alt="QR Code"
+                        class="w-48 h-48 rounded-lg shadow-xl border-4 border-cyan-500 p-2 bg-white" />
+                    <p class="mt-4 text-lg text-gray-300">Escanea para acceder al demo</p>
+                </div>
+                <div class="animated-item fade-in-right md:w-1/2" style="transition-delay: 0.3s;">
+                    <h2
+                        class="text-4xl md:text-5xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-200">
+                        ¡Pruébalo ahora!
+                    </h2>
+                    <p class="text-xl text-gray-200 mb-8">
+                        Diseña tu propio estilo y desata tu creatividad con <span class="text-cyan-400 font-semibold">BE
+                            DIFFERENT 3D</span>.
+                    </p>
+                    <a id="ctaButton" href="#" target="_blank" rel="noopener noreferrer"
+                        class="hero-button-hover inline-block px-10 py-5 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-xl rounded-full shadow-lg hover:shadow-xl transform transition-all duration-300 ease-in-out border-2 border-transparent hover:border-cyan-300">
+                        Diseña tu propio estilo
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <footer class="py-10 px-4 bg-gray-800 text-gray-400 text-center text-sm">
+            <div class="max-w-6xl mx-auto space-y-2">
+                <p class="font-semibold text-gray-300">Josephine Blondelle Ndi Ndzouli</p>
+                <p>UOC - Grado en Técnicas de Interacción Digital y Multimedia</p>
+                <p>Curso 2024/2025</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        const demoLink = "https://3dweb-three.vercel.app/";
+
+        const generateQrCodeUrl = (text) => `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tooltipElement = document.getElementById('tooltip');
+            window.addEventListener('mousemove', (e) => {
+                document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+                document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+
+                if (tooltipElement.classList.contains('visible')) {
+                    tooltipElement.style.left = `calc(var(--mouse-x) + 20px)`;
+                    tooltipElement.style.top = `calc(var(--mouse-y) + 20px)`;
+                }
+            });
+
+            // --- Intersection Observer Setup ---
+            const observerOptions = {
+                threshold: 0.1,
+            };
+
+            const intersectionCallback = (entries, observerInstance) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        if (entry.target.dataset.triggerOnce !== 'false') {
+                            observerInstance.unobserve(entry.target);
+                        }
+                    } else {
+                        if (entry.target.dataset.triggerOnce === 'false') {
+                        }
+                    }
+                });
+            };
+            const observer = new IntersectionObserver(intersectionCallback, observerOptions);
+            document.querySelectorAll('.animated-item, .fade-in, .fade-in-up, .fade-in-down, .fade-in-left, .fade-in-right, .scale-in, .spring-in, .how-it-works-arrow').forEach(el => {
+                observer.observe(el);
+            });
+
+
+            // --- Hero Section Specifics ---
+            document.getElementById('heroSection').classList.add('is-visible');
+            document.getElementById('heroLogoTitle').classList.add('is-visible');
+            document.getElementById('heroSubtitle').classList.add('is-visible');
+            document.getElementById('heroTagline').classList.add('is-visible');
+            document.getElementById('heroButton').classList.add('is-visible');
+            document.getElementById('heroButton').href = demoLink;
+
+
+            // --- How It Works Section ---
+            const stepsData = [
+                { title: "Inicio", description: "Accede a la plataforma y descubre las opciones de personalización.", iconSvg: '<svg class="w-12 h-12 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001 1h2a1 1 0 001-1m-6 0h6"></path></svg>' },
+                { title: "Selección de Producto", description: "Elige entre camisetas, gorras o zapatillas para empezar a diseñar.", iconSvg: '<svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6a2 2 0 00-2-2H5a2 2 0 00-2 2v13m11 0V6a2 2 0 012-2h2a2 2 0 012 2v13m-17 0h18a2 2 0 002-2V7a2 2 0 00-2-2H3a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>' },
+                { title: "Personalizador 3D", description: "Modifica colores, sube imágenes o genera logos con IA en tiempo real.", iconSvg: '<svg class="w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>' },
+                { title: "Exportación", description: "Descarga tu diseño finalizado para compartirlo o imprimirlo.", iconSvg: '<svg class="w-12 h-12 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l3-3m-3 3l-3-3m-3 8h12a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>' },
+            ];
+            const stepsContainer = document.getElementById('howItWorksSteps');
+            const arrowsContainer = document.getElementById('howItWorksArrows');
+            stepsData.forEach((step, index) => {
+                const stepDiv = document.createElement('div');
+                stepDiv.className = 'animated-item fade-in-up step-card-hover flex flex-col items-center text-center p-6 rounded-xl bg-gray-900 shadow-xl border border-gray-700 md:w-1/4 transition-all duration-300';
+                stepDiv.style.transitionDelay = `${0.2 * index}s`;
+                stepDiv.innerHTML = `
+                    <div class="mb-4 p-3 rounded-full bg-gray-800 border border-cyan-600">
+                        ${step.iconSvg}
+                    </div>
+                    <h3 class="text-2xl font-semibold mb-2 text-cyan-300">${step.title}</h3>
+                    <p class="text-gray-300">${step.description}</p>
+                `;
+                stepsContainer.appendChild(stepDiv);
+                observer.observe(stepDiv);
+            });
+
+            // --- Key Differences Carousel ---
+            const differencesData = [
+                { title: "IA Integrada", description: "Generación de logotipos y texturas con Inteligencia Artificial (OpenAI / DALL·E).", iconSvg: '<svg class="w-16 h-16 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-1.25-3M15 10V5a2 2 0 00-2-2H7a2 2 0 00-2 2v5m10 0h3a2 2 0 012 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2v-6a2 2 0 012-2h3m5.455 1.141A6.5 6.5 0 0012 20a6.5 6.5 0 00-3.455-1.859M12 10.001V12m0-2.999V5.75"></path></svg>' },
+                { title: "Vista 3D Inmersiva", description: "Visualiza tus diseños en 3D.", iconSvg: '<svg class="w-16 h-16 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>' },
+                { title: "Navegación por Fases", description: "Proceso de diseño guiado y estructurado para una experiencia fluida.", iconSvg: '<svg class="w-16 h-16 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>' },
+                { title: "Exportación Instantánea", description: "Descarga tus creaciones al instante, listas para compartir o producir.", iconSvg: '<svg class="w-16 h-16 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>' },
+            ];
+            const carouselContainer = document.getElementById('keyDifferencesCarouselContainer');
+            const dotsContainer = document.getElementById('carouselDots');
+            let currentDifferenceIndex = 0;
+            let autoSlideInterval;
+
+            function showSlide(index) {
+                const items = carouselContainer.querySelectorAll('.carousel-item');
+                items.forEach((item, i) => {
+                    if (i === index) {
+                        item.classList.remove('exiting');
+                        item.classList.add('active');
+                    } else if (item.classList.contains('active')) {
+                        item.classList.remove('active');
+                        item.classList.add('exiting');
+                    } else {
+                        item.classList.remove('active', 'exiting');
+                    }
+                });
+
+                const dots = dotsContainer.querySelectorAll('button');
+                dots.forEach((dot, i) => {
+                    dot.className = `w-3 h-3 rounded-full transition-all duration-300 ${index === i ? 'bg-cyan-400 scale-125' : 'bg-gray-600 hover:bg-gray-400'}`;
+                });
+                currentDifferenceIndex = index;
+            }
+
+            differencesData.forEach((diff, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'carousel-item flex flex-col items-center';
+                itemDiv.innerHTML = `
+                    <div class="mb-6 p-4 rounded-full bg-gray-800 border border-blue-600">${diff.iconSvg}</div>
+                    <h3 class="text-3xl font-bold mb-4 text-cyan-300">${diff.title}</h3>
+                    <p class="text-xl text-gray-300 max-w-2xl">${diff.description}</p>
+                `;
+                carouselContainer.appendChild(itemDiv);
+
+                const dotButton = document.createElement('button');
+                dotButton.setAttribute('aria-label', `Go to slide ${index + 1}`);
+                dotButton.addEventListener('click', () => {
+                    showSlide(index);
+                    resetAutoSlide();
+                });
+                dotsContainer.appendChild(dotButton);
+            });
+
+            showSlide(0);
+
+            document.getElementById('carouselPrev').addEventListener('click', () => {
+                const newIndex = (currentDifferenceIndex - 1 + differencesData.length) % differencesData.length;
+                showSlide(newIndex);
+                resetAutoSlide();
+            });
+            document.getElementById('carouselNext').addEventListener('click', () => {
+                const newIndex = (currentDifferenceIndex + 1) % differencesData.length;
+                showSlide(newIndex);
+                resetAutoSlide();
+            });
+
+            function resetAutoSlide() {
+                clearInterval(autoSlideInterval);
+                autoSlideInterval = setInterval(() => {
+                    const newIndex = (currentDifferenceIndex + 1) % differencesData.length;
+                    showSlide(newIndex);
+                }, 5000);
+            }
+            resetAutoSlide();
+
+            // --- Demo Section ---
+            const demoImagesData = [
+                {
+                    src: "images/demo-camiseta.png",
+                    alt: "Ejemplo de personalización de camiseta con logo de dragón",
+                    tooltip: "Camiseta con diseño personalizado"
+                },
+                {
+                    src: "images/demo-gorra.png",
+                    alt: "Diseño de gorra negra en vista 3D",
+                    tooltip: "Gorra personalizada en 3D"
+                },
+                {
+                    src: "images/demo-zapatillas.png",
+                    alt: "Zapatillas deportivas con logotipo generado por IA",
+                    tooltip: "Zapatillas personalizada en 3D"
+                },
+                {
+                    src: "images/demo-interfaz.png",
+                    alt: "Captura de la interfaz de personalización",
+                    tooltip: "Interfaz intuitiva"
+                },
+                {
+                    src: "images/demo-texturas.png",
+                    alt: "Muestra de texturas generadas para productos",
+                    tooltip: "Generación de texturas"
+                },
+                {
+                    src: "images/demo-IA.png",
+                    alt: "Herramienta IA",
+                    tooltip: "Herramienta IA"
+                },
+            ];
+
+            const demoGridContainer = document.getElementById('demoGrid');
+
+            demoImagesData.forEach((imgData, index) => {
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'animated-item scale-in demo-image-hover relative rounded-xl overflow-hidden shadow-xl border border-gray-700 group cursor-pointer transition-all duration-300';
+                imgDiv.style.transitionDelay = `${0.1 * index}s`;
+                imgDiv.innerHTML = `
+                    <img src="${imgData.src}" alt="${imgData.alt}" class="w-full h-48 object-cover transition-transform duration-300">
+                    <div class="group-hover-overlay absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 transition-opacity duration-300">
+                        <p class="text-white text-lg font-semibold">${imgData.tooltip}</p>
+                    </div>
+                `;
+                imgDiv.addEventListener('mouseenter', () => {
+                    tooltipElement.textContent = imgData.tooltip;
+                    tooltipElement.classList.add('visible');
+                });
+                imgDiv.addEventListener('mouseleave', () => {
+                    tooltipElement.classList.remove('visible');
+                });
+                demoGridContainer.appendChild(imgDiv);
+                observer.observe(imgDiv);
+            });
+
+
+            // --- Tech Stack Section ---
+            const technologiesData = [
+                { name: "React", icon: "https://www.svgrepo.com/show/452092/react.svg" },
+                { name: "Three.js", icon: "images/Three.png" },
+                { name: "TailwindCSS", icon: "images/TailwindCS.png" },
+                { name: "OpenAI", icon: "images/ChatGPT.png" }, 
+                { name: "Vercel", icon: "images/Vercel.png" },
+                { name: "Framer Motion", icon: "images/framer-motion.png" }, 
+            ];
+
+            const techStackContainer = document.getElementById('techStackGrid');
+            technologiesData.forEach((tech, index) => {
+                const techDiv = document.createElement('div');
+                techDiv.className = 'animated-item fade-in-up tech-card-hover flex flex-col items-center text-center p-6 rounded-xl bg-gray-900 shadow-xl border border-gray-700 transition-all duration-300';
+                techDiv.style.transitionDelay = `${0.1 * index}s`;
+                techDiv.innerHTML = `
+        <img src="${tech.icon}" alt="${tech.name}" class="w-20 h-20 mb-4 filter drop-shadow-lg object-contain" /> 
+        <h3 class="text-xl font-semibold text-cyan-300">${tech.name}</h3>
+    `
+                techStackContainer.appendChild(techDiv);
+                observer.observe(techDiv);
+            });
+
+            // --- CTAR Section ---
+            document.getElementById('qrCodeImage').src = generateQrCodeUrl(demoLink);
+            document.getElementById('ctaButton').href = demoLink;
+
+        });
+    </script>
+</body>
+
+</html>
